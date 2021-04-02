@@ -1,27 +1,21 @@
 import math
 
 stru_dict = {'H': 0, 'E': 1, 'C': 2}
-
 stru_list = ['H', 'E', 'C']
-
 amino_dict = {'ALA': 0, 'ARG': 1, 'ASN': 2, 'ASP': 3, 'CYS': 4, 'GLU': 5, 'GLN': 6, 'GLY': 7, 'HIS': 8,
            'ILE': 9, 'LEU': 10, 'LYS': 11, 'MET': 12, 'PHE': 13, 'PRO': 14, 'SER': 15, 'THR': 16,
            'TRP': 17, 'TYR': 18, 'VAL': 19}
-
 amino_list = ['ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLU', 'GLN', 'GLY', 'HIS', 'ILE', 'LEU','LYS',
               'MET', 'PHE', 'PRO', 'SER', 'THR', 'TRP', 'TYR', 'VAL']
-
 amino_count = {'ALA': 0, 'ARG': 0, 'ASN': 0, 'ASP': 0, 'CYS': 0, 'GLU': 0, 'GLN': 0, 'GLY': 0, 'HIS': 0,
            'ILE': 0, 'LEU': 0, 'LYS': 0, 'MET': 0, 'PHE': 0, 'PRO': 0, 'SER': 0, 'THR': 0,
            'TRP': 0, 'TYR': 0, 'VAL': 0}
 
-# # prediction lists for both datasets
-pred_stride = []   
-pred_dssp = []
-
-#
-stride_result = []
-dssp_result = [[]]
+# Load And Format Data Files For Further Use 
+# In this section I read the data files and format them into usable lists using three methods. 
+# i) file_format: This method removes the lines and tabs from a given file and returns it as a list. 
+# ii) structure_type: This method first checks if a given amino acid is in the list of naturally occurring amino acids and if they are, it changes the structure type to match in the initials from the structures above. It also counts the number of each structure type and amino acid type occurring which are both printed. 
+# iii) nest: To differentiate between two proteins, this method is used to make a list into a nested list so that it becomes easier to manipulate data for testing and manipulation.
 
 def file_format(afile,alist):
     lines = afile.readlines()
@@ -81,20 +75,17 @@ def unique(list1):
             unique_list.append(x)
     return unique_list
 
-stride_file = open('stride_info.txt','r')
-dssp_file = open('dssp_info.txt','r')
-cath_file = open('cath_info.txt', 'r')
-uniprot_file = open('uniprot.txt', 'r')
+stride_file = open('/Users/aneruthmohanasundaram/Documents/GitHub/Amino-Acid-Prediction/Assignment 1/Datasets/stride_info.txt','r')
+dssp_file = open('/Users/aneruthmohanasundaram/Documents/GitHub/Amino-Acid-Prediction/Assignment 1/Datasets/dssp_info.txt','r')
+cath_file = open('/Users/aneruthmohanasundaram/Documents/GitHub/Amino-Acid-Prediction/Assignment 1/Datasets/cath_info.txt', 'r')
 
 stride_list = []
 dssp_list = []
 cath_list = []
-uniprot_list = []
 
 file_format(stride_file, stride_list)
 file_format(dssp_file, dssp_list)
 file_format(cath_file, cath_list)
-file_format(uniprot_file, uniprot_list)
 print('The division of structure type in the STRIDE dataset is as follows: ')
 stride_list = structure_type(stride_list)
 amino_count = {'ALA': 0, 'ARG': 0, 'ASN': 0, 'ASP': 0, 'CYS': 0, 'GLU': 0, 'GLN': 0, 'GLY': 0, 'HIS': 0,
@@ -106,8 +97,19 @@ dssp_list = structure_type(dssp_list)
 
 stride_nest = nest(stride_list)
 dssp_nest = nest(dssp_list)
-uniprot_nest= nest(uniprot_list)
 
+# Create Self Information And Residual Information Class
+# The advantage of making classes is that we can compute and store all the data once for both self and residual information which is more efficient than saving this data over and over again. Another added advantage is that b adding 2 methods to add and remove information, we can implement leave one out method efficiently by first removing the protein data in question and then adding it back again for the next protein. There are 5 methods in each class, including the constructor:
+
+# _init__: Creates a nested list to store data for each occurrence.
+
+# setter: Adds the value of a given row and column by 1 to indicate another occurance of the amino acid.
+
+# getter: returns the value of a given row and column.
+
+# remove_row: Used when we need to leave out a protein.
+
+# add_row: Used to add back protein before moving onto the next case.
 class SelfInfo(object):
     def __init__(self):
         self.table = [[0 for j in range(3)] for i in range(20)]  # 20 proteins are added in the list
@@ -180,7 +182,8 @@ def create_table(protein, self_table, residual_table):
 
 
 
-# generate whole counting table
+# This block of code contains two methods which make use of the above classes to create tables for self information and residual information. 
+# create_table: Counts the number of amino acid occurrence for both self information and residual information tables and updates the tables accordingly. generate: Calls the create table method in a loop.
 def generate(aGroup):
     self_table = SelfInfo()
     residual_table = ResidualInfo()
@@ -188,6 +191,8 @@ def generate(aGroup):
         create_table(protein, self_table, residual_table)
     return self_table, residual_table
 
+# Compute Self Information
+# This method calculates the self information of a given residue based on the formula: I (ΔSj ;Rj )
 def compute_self_information(self_table, residue_name):
     I = []      # use to store the I of Helix, Sheet and Coil
     for stru in stru_list:      
@@ -212,30 +217,28 @@ def compute_self_information(self_table, residue_name):
         I.append(i)
     return I
 
-def predict(protein, j, self_table, residual_table):
-    
+# Prediction
+# # prediction lists for both datasets
+pred_stride,pred_dssp = [],[]
+stride_result,dssp_result = [],[[]]
+def predict(protein, j, self_table, residual_table):    
     self_name = (protein[j])[-2]
     I = compute_self_information(self_table, self_name)  # compute the self-information propensity
-
     # compute the pair information propensity
     sequence0 = protein[j][2]
     for a in range(3):
         stru = stru_list[a]
-
         for m in range(-8, 9, 1):
             if m == 0:
                 continue
             if j + m < 0 or j + m > len(protein) - 1:  # avoid index out of range
                 continue
-
             sequence1 = (protein[j + m])[2]
             m0 = int(sequence1) - int(sequence0)  # the minus of two residues sequence code
             if m0 not in range(-8, 9):
                 continue
-
             self_name = (protein[j])[-2]
             residual_name = (protein[j + m])[-2]
-
             number0 = residual_table.getter(amino_dict[self_name], m0 + 8, amino_dict[residual_name], stru_dict[stru])
             number1 = 0
             number2 = 0
@@ -244,7 +247,6 @@ def predict(protein, j, self_table, residual_table):
                 if s != stru:
                     number1 = number1 + residual_table.getter(amino_dict[self_name], m0 + 8, amino_dict[residual_name], stru_dict[s])
                     number2 = number2 + self_table.getter(amino_dict[residual_name], stru_dict[s])
-
             if number1 == 0:
                 I[a] = math.inf
                 break
@@ -261,6 +263,7 @@ def predict(protein, j, self_table, residual_table):
             break
     return stru_list[i]
 
+# Predict Both Datasets
 def predict_dataset(nested_list, result_list, data_self_table, data_residual_table):
     for i in range(len(nested_list)):
         self_table = SelfInfo()
@@ -270,12 +273,9 @@ def predict_dataset(nested_list, result_list, data_self_table, data_residual_tab
                 protein = nested_list[i]
                 create_table(protein, self_table, residual_table)
                 break
-            
-    
         pred = []
         for j in range(len(protein)):
             pred.append(predict(protein, j, data_self_table, data_residual_table))
-    
         result_list.append(pred)
         
 # get whole counting table
@@ -285,6 +285,7 @@ self_table_dssp, residual_table_dssp = generate(dssp_nest)
 predict_dataset(stride_nest, pred_stride, self_table_stride, residual_table_stride)
 predict_dataset(dssp_nest, pred_dssp, self_table_dssp, residual_table_dssp)
 
+# To get Q3 Score
 def score(prediction, facts):
     scores = []
     # traverse both the prediction and actual structure and compare them
@@ -306,7 +307,6 @@ def score(prediction, facts):
                         MCC_table[i][1] += 1
                     else:
                         MCC_table[i][3] += 1  # TN
-
         MCC = []
         for table in MCC_table:
             TP = table[0]
@@ -318,12 +318,9 @@ def score(prediction, facts):
             except ZeroDivisionError:
                 mcc = (TP*TN - FP*FN)
             MCC.append(mcc)
-
         Q3 = correct/len(pChain)
         scores.append([Q3, MCC])
-
     return scores
-
 
 scores_stride = score(pred_stride, stride_nest)
 scores_dssp = score(pred_dssp, dssp_nest)
@@ -339,7 +336,8 @@ for el1, el2 in zip(scores_stride, scores_dssp):
 print('The overall Q3 for stride without leaving out protein in the dataset is', 100*count1/len(scores_stride), '%.')
 print('The overall Q3 for dssp without leaving out protein in the dataset is', 100*count2/len(scores_dssp), '%.')
 
-# # prediction lists for both datasets
+# Leave One Out 
+# prediction lists for both datasets
 pred_stride = []   
 pred_dssp = []
 # get whole counting table
@@ -353,15 +351,12 @@ def predict_dataset_leave(nested_list, result_list, data_self_table, data_residu
             if i == j:
                 protein = nested_list[i]
                 create_table(protein, self_table, residual_table)
-                break
-            
+                break 
         self_table_stride.remove_row(self_table)
         residual_table_stride.remove_row(residual_table)
-    
         pred = []
         for j in range(len(protein)):
             pred.append(predict(protein, j, data_self_table, data_residual_table))
-    
         self_table_stride.add_row(self_table)
         residual_table_stride.add_row(residual_table)
         result_list.append(pred)
@@ -451,17 +446,3 @@ predf_dssp = pFamily(scores_dssp)
 
 print("The accuracy of prediction for protein family in stride dataset is ", accuracy(predf_stride, cath_list))
 print("The accuracy of prediction for protein family in dssp dataset is  ",  accuracy(predf_dssp, cath_list))
-
-stride_result = []
-for p in pred_stride:
-    s = list_to_string(p)
-    s = s.replace(" ", "")
-    stride_result.append(s)
-    
-a2 = list(zip(*stride_list))
-a2 = a2[0]
-stride_name= unique(a2)
-stride_result = list(zip(stride_name, stride_result,scores_stride,predf_stride))
-stride_result
-
-print(uniprot_list)

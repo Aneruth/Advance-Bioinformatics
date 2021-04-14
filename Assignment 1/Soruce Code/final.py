@@ -9,26 +9,26 @@ amino_dict = {'ALA': 0, 'ARG': 1, 'ASN': 2, 'ASP': 3, 'CYS': 4, 'GLU': 5, 'GLN':
            'ILE': 9, 'LEU': 10, 'LYS': 11, 'MET': 12, 'PHE': 13, 'PRO': 14, 'SER': 15, 'THR': 16,
            'TRP': 17, 'TYR': 18, 'VAL': 19}
 
-amino_list = np.array(['ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLU', 'GLN', 'GLY', 'HIS', 'ILE', 'LEU','LYS',
-              'MET', 'PHE', 'PRO', 'SER', 'THR', 'TRP', 'TYR', 'VAL'])
+# amino_list = np.array(['ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLU', 'GLN', 'GLY', 'HIS', 'ILE', 'LEU','LYS',
+#               'MET', 'PHE', 'PRO', 'SER', 'THR', 'TRP', 'TYR', 'VAL'])
 
 amino_total_count = {}
 
-h_cnt = 0
-b_cnt = 0
-c_cnt = 0
+helix_count = 0
+beta_count = 0
+coil_count = 0
 
 
 def count(txt_file):
-    global h_cnt, b_cnt, c_cnt, amino_total_count
+    global helix_count, beta_count, coil_count, amino_total_count
     #new_list = np.empty(shape=(1,5), dtype=str )
     new_list = []
     amino_total_count = {'ALA': 0, 'ARG': 0, 'ASN': 0, 'ASP': 0, 'CYS': 0, 'GLU': 0, 'GLN': 0, 'GLY': 0, 'HIS': 0,
            'ILE': 0, 'LEU': 0, 'LYS': 0, 'MET': 0, 'PHE': 0, 'PRO': 0, 'SER': 0, 'THR': 0,
            'TRP': 0, 'TYR': 0, 'VAL': 0}
-    h_cnt = 0
-    b_cnt = 0
-    c_cnt = 0
+    helix_count = 0
+    beta_count = 0
+    coil_count = 0
 
     txt_file = np.char.replace(txt_file, 'Helix', 'H')
     txt_file = np.char.replace(txt_file, 'Beta', 'E')
@@ -36,19 +36,19 @@ def count(txt_file):
     txt_file = np.char.replace(txt_file, 'Coil', 'C')
 
     for i in range(len(txt_file)):  
-        if txt_file[i][3] in amino_list:
+        if txt_file[i][3] in list(amino_dict.keys()):
             c = amino_total_count.get(txt_file[i][3])
             c += 1
             amino_total_count.update({txt_file[i][3]: c})
 
             if txt_file[i][4] == 'H':
-                h_cnt += 1
+                helix_count += 1
             
             elif txt_file[i][4] == 'E':
-                b_cnt += 1
+                beta_count += 1
             
             elif txt_file[i][4] == 'C':
-                c_cnt += 1
+                coil_count += 1
 
             new_list.append(txt_file[i])
             #new_list = np.append(new_list, [txt_file[i]] , axis=0)
@@ -154,7 +154,7 @@ def compute_self_information(self_table, residue_name):
         for s in stru_list:
             if s != stru:
                 f_nsr = f_nsr + self_getter(self_table, amino_dict[residue_name], stru_dict[s])
-        for residue in amino_list:
+        for residue in list(amino_dict.keys()):
             for s in stru_list:
                 if s != stru:
                     f_ns = f_ns + self_getter(self_table, amino_dict[residue], stru_dict[s])
@@ -301,11 +301,11 @@ def main():
 
     print('\nThe division of structure type in the STRIDE dataset is as follows: ')
     stride_list = count(stride_list)
-    print('The Helix count is: ' + str(h_cnt),'\nThe Beta count is:' + str(b_cnt),'\nThe Coil count is:' + str(c_cnt),'\n',amino_total_count)
+    print('The Helix count is: ' + str(helix_count),'\nThe Beta count is:' + str(beta_count),'\nThe Coil count is:' + str(coil_count),'\n',amino_total_count)
     
     print('\nThe division of structure type in the DSSP dataset is as follows: ')
     dssp_list = count(dssp_list)
-    print('The Helix count is: ' + str(h_cnt),'\nThe Beta count is:' + str(b_cnt),'\nThe Coil count is:' + str(c_cnt),'\n',amino_total_count)
+    print('The Helix count is: ' + str(helix_count),'\nThe Beta count is:' + str(beta_count),'\nThe Coil count is:' + str(coil_count),'\n',amino_total_count)
 
     stride_nest = separate_protein_class(stride_list)
     dssp_nest = separate_protein_class(dssp_list)   

@@ -39,8 +39,10 @@ def fetchQualityScore(alist):
     blist = [qulaityScore(j) for i in list(alist) for j in i]
     return blist
 
-def suffixArray(alist):
-    pass
+def suffixArray(s):
+    suffixes = [(s[i:], i) for i in range(len(s))]
+    suffixes.sort(key=lambda x: x[0])
+    return [s[1] for s in suffixes]
 
 genome = readGenome(genome_info)
 asd = genome[:500] # To read the first 500 genome 

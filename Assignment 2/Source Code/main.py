@@ -1,7 +1,7 @@
 # Importing packages to visualise
 import matplotlib.pyplot as plt
 
-genome_info = '/Users/aneruthmohanasundaram/Documents/GitHub/Advance-Bioinformatics/Assignment 2/Datasets/dm6.fa'
+genome_info = '/Users/aneruthmohanasundaram/Documents/GitHub/Advance-Bioinformatics/Assignment 2/Datasets/chr2L.fa'
 sequence_info = '/Users/aneruthmohanasundaram/Documents/GitHub/Advance-Bioinformatics/Assignment 2/Datasets/10k_reads.fastq'
 
 def readGenome(aFile):
